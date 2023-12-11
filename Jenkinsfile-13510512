@@ -1,56 +1,23 @@
-pipeline {
-  agent any
-  tools {
-    maven 'maven'
-  }
-  options {
-    buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')
-    disableConcurrentBuilds()
-  }
-  stages {
-    stage ('Build (phkbzp)') {
-      steps {
-        sh script: 'mvn clean ', label: 'dwtu5j'
-        sh script: 'mvn test ', label: '6v3qdc'
-        sh script: 'mvn install -Dmaven.test.skip=true', label: 'rs0v11'
-      } //end steps
-    } // end stage Build
-    stage ('Deploy (udkjn6)') {
-      steps {
-        script {
-		docker.withTool('docker'){
-		  docker.withRegistry('https://artifactory.dagility.com', 'cacebf1e-b806-43d7-a08e-0b32122840fd'){
-        
-            sh script: '''
-docker build -t artifactory.dagility.com/docker/vdcheckter-backend:latest .
-''', label: 'facadb'
-            sh script: '''
-docker push artifactory.dagility.com/docker/vdcheckter-backend:latest
-''', label: 'acbdfa'
-        		}
-			}
-	}
-script { sh script: 'sleep 0.005', label: 'fmw4o7'}
+library identifier: 'sf-shared-library@feature/pace-tf', retriever: modernSCM(
+  [$class: 'GitSCMSource',
+   remote: 'https://gitlab.ustpace.com/solution-factory/sf-jenkins-libraries-mirror.git',
+   credentialsId: 'scm-cred-id'])
 
-        sh script: '''
-ln -sf /usr/local/bin/helm3 /usr/local/bin/helm
-''', label: 'rlklcw'
-        sh script: 'helm package chart', label: 'ijhrf0'
-        withCredentials([usernamePassword(credentialsId: 'cacebf1e-b806-43d7-a08e-0b32122840fd', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+terraformBuild {
+  jobName = "terraform-aws-build"
+  imageName = "jenkins-agent-terraform-aws-build"
 
-        script {
-            sh script: '''
-curl -u$USER:$PASS -T vdcheckter-backend-chart-0.1.0.tgz 'https://artifactory.dagility.com/artifactory/helm-local/vdcheckter-backend-chart-0.1.0.tgz' 
-''', label: 'fdbbac'
-        } // end step group script
-script { sh script: 'sleep 0.005', label: '4j2evm'}
-} // end step group
-		withCredentials([   usernamePassword(credentialsId: 'cacebf1e-b806-43d7-a08e-0b32122840fd', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-        	sh script: 'helm repo add vdcheckter-backend https://artifactory.dagility.com/artifactory/helm --username $USER --password $PASS', label: 'rvsu01'
-		}
-        sh script: 'helm repo update', label: 'mesfnb'
-        sh script: 'helm upgrade vdcheckter-backend-deployment vdcheckter-backend/vdcheckter-backend-chart --install --values chart-values.yaml --namespace edgeops-keycloak --set ingress.hosts[0].host=vdcheckter-backend-edgeops-keycloak.dagility.com', label: 'ixxrui'
-      } //end steps
-    } // end stage Deploy
-  }
+  terraformModulesRepoUrl = "https://gitlab.ustpace.com/solution-factory/sf-terraform/sf-contributor/sf-terraform-build.git"
+  terraformModulesRepoCredentialsId = "sf_gitlab_code_ro"
+  terraformModulesRepoBranch = "package"
+  terraformBuildRepoUrl = "https://dev.azure.com/USTG/DAPS/_git/sf-terraform-jenkins"
+  terraformBuildRepoCredentialsId = "sf_abhilash_ado_code_ro"
+  terraformBuildRepoBranch = "feature/abhi-terraform"
+  terraformBuildRepo = "aws/modules/aws_db"
+  terraformcodescan = "null"
+  jenkinsAgentTerraform = "registry.ustpace.com/docker-sf/jenkins-agent-terraform:lts"
+  jenkinsJnlp = "registry.ustpace.com/docker-sf/jenkins-jnlp:lts"
+  jenkinsImagePullSecret = "dagility-artifactory"
+  gitBranch = "main"
+  gitCredentialsId = "gitlab-scm"
 }

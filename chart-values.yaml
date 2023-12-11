@@ -1,0 +1,14 @@
+image:
+  repository: artifactory.dagility.com/docker/vdcheckter-backend
+  tag: latest
+  pullPolicy: Always
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx-internal
+  hosts:
+  - host: vdcheckter-backend-edgeops-keycloak.dagility.com
+    paths:
+    - /
+serviceAccount:
+  create: false

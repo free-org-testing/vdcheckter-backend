@@ -7,6 +7,6 @@ module "vpc" {
   tags = {
     Terraform = "true"
     Environment = "dev"
-    Name = "testAbhilashvpc"
+  Name = "default"
   }
 }
